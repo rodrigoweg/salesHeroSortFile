@@ -1,5 +1,6 @@
 package com.salehero.sorter.service;
 
+import com.salehero.sorter.utils.Utils;
 import org.codehaus.plexus.util.FileUtils;
 
 import java.io.*;
@@ -9,29 +10,32 @@ import java.util.List;
 public class FileManager {
 
 
-    public static File[] fileSpliter(String PATH, String PATH_CHUNKS) {
+    public static File[] fileSpliter(File sourceFile,int chunkSize) {
 
         List<File> result = new ArrayList<>();
-
+        String PATH_CHUNKS = sourceFile.getParent()+Utils.CHUNK_FOLDER_NAME;
         String line = "";
         try {
+            if(!new File(PATH_CHUNKS).exists()){
+                new File(PATH_CHUNKS).mkdirs();
+            }
             FileUtils.cleanDirectory(PATH_CHUNKS);
-            FileInputStream fs = new FileInputStream(PATH + "numbers.txt");
+            FileInputStream fs = new FileInputStream(sourceFile);
             BufferedReader br = new BufferedReader(new InputStreamReader(fs));
 
-            int count = 1;
+            int count = 0;
             int lineNumber = 0;
-            FileOutputStream fos = new FileOutputStream(PATH_CHUNKS + "numbers" + count + ".txt");
+            FileOutputStream fos = new FileOutputStream(PATH_CHUNKS + Utils.TMP_CHUNK_FILE_NAME + count + ".txt");
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
-            result.add(new File(PATH_CHUNKS + "numbers" + count + ".txt"));
+            result.add(new File(PATH_CHUNKS + Utils.TMP_CHUNK_FILE_NAME + count + ".txt"));
             while ((line = br.readLine()) != null) {
                 System.out.println(line);
-                if (lineNumber % 5 == 0) {
+                if (lineNumber!= 0 && lineNumber % chunkSize == 0) {
                     fos.close();
                     count++;
-                    fos = new FileOutputStream(PATH_CHUNKS + "numbers" + count + ".txt");
+                    fos = new FileOutputStream(PATH_CHUNKS + Utils.TMP_CHUNK_FILE_NAME + count + ".txt");
                     bw = new BufferedWriter(new OutputStreamWriter(fos));
-                    result.add(new File(PATH_CHUNKS + "numbers" + count + ".txt"));
+                    result.add(new File(PATH_CHUNKS + Utils.TMP_CHUNK_FILE_NAME + count + ".txt"));
 
                     bw.write(line);
                     bw.newLine();
@@ -54,23 +58,24 @@ public class FileManager {
         return result.toArray(new File[result.size()]);
     }
 
-    public static void fileJoiner(String PATH_JOIN, String PATH_CHUNKS) {
-        String line = "";
+    public static File fileJoiner(String PATH_JOIN, String PATH_CHUNKS) {
 
+        File fileOutput = null;
         try {
-            int count = 1;
+            int count = 0;
 
-            File fileOutput = new File(PATH_JOIN + "numbers.txt");
+            fileOutput = new File(PATH_JOIN);
             if (fileOutput.exists()) {
                 fileOutput.delete();
             }
-            FileOutputStream fos = new FileOutputStream(PATH_JOIN + "numbers.txt");
+            FileOutputStream fos = new FileOutputStream(PATH_JOIN);
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
 
-            File fileInput = new File(PATH_CHUNKS + "numbers" + count + ".txt");
+            File fileInput = new File(PATH_CHUNKS + Utils.TMP_CHUNK_FILE_NAME + count + ".txt");
             while (fileInput.exists()) {
-                FileInputStream fs = new FileInputStream(PATH_CHUNKS + "numbers" + count + ".txt");
+                FileInputStream fs = new FileInputStream(PATH_CHUNKS + Utils.TMP_CHUNK_FILE_NAME + count + ".txt");
                 BufferedReader br = new BufferedReader(new InputStreamReader(fs));
+                String line = "";
                 while ((line = br.readLine()) != null) {
                     bw.write(line);
                     bw.newLine();
@@ -78,7 +83,7 @@ public class FileManager {
                 }
 
                 count++;
-                fileInput = new File(PATH_CHUNKS + "numbers" + count + ".txt");
+                fileInput = new File(PATH_CHUNKS + Utils.TMP_CHUNK_FILE_NAME + count + ".txt");
             }
 
 
@@ -87,6 +92,7 @@ public class FileManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return fileOutput;
     }
 
     static public int[] fileToArray(File file){
