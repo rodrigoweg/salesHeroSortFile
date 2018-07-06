@@ -1,10 +1,12 @@
 package com.salehero.sorter.service;
 
-import com.salehero.sorter.utils.Utils;
+import com.salehero.sorter.utils.Const;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.File;
-import java.util.*;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.Arrays;
 
 public class Sorter {
 
@@ -14,23 +16,29 @@ public class Sorter {
      * @param bulkSize Size able to manipulate due memory limitation
      * @return
      */
-    static File sortFile(File sourceFile, int bulkSize) {
+    static File sortFile(File sourceFile, int bulkSize) throws UnsupportedEncodingException {
         //Divide data in the size that could be processed
-        File[] dataFiles = FileManager.fileSpliter(sourceFile, bulkSize);
-        String PATH_BULK = sourceFile.getParent()+Utils.CHUNK_FOLDER_NAME;
+        long start = System.currentTimeMillis();
+        String PATH_CHUNKS_FOLDER = URLDecoder.decode(Const.CHUNK_FOLDER_PATH, "UTF-8");
+        File[] dataFiles = FileManager.fileSpliter(sourceFile,PATH_CHUNKS_FOLDER, bulkSize);
         //Blocks first order subFiles
+
         for (int i = 0; i < dataFiles.length; i++) {
             File bulkFile = dataFiles[i];
             int[] bulkArray = FileManager.fileToArray(bulkFile);
             //DualPivotQuicksort algorith used
             Arrays.sort(bulkArray);
-            bulkFile = FileManager.arrayToFile(bulkArray,bulkFile.getAbsolutePath());
+            FileManager.arrayToFile(bulkArray,bulkFile);
         }
-        System.out.println("----------------------------------------------------------------------");
+        long time = System.currentTimeMillis() - start;
+        System.out.println("END SORTING CHUNKS. Time used: "+time/ 1e3+" seconds.");
         boolean ordered = false;
+        int  iteration = 0;
+        start = System.currentTimeMillis();
         while(!ordered){
             ordered = true;
-
+            time = System.currentTimeMillis() - start;
+            System.out.println("ITERATION NUMBER: "+(iteration++)+". Time used: "+time/ 1e3+" seconds.");
             //This for will iterate until all the blocks are ordered;
             // the condition is that the highest element from lower block is smaller than the smallest from the high block
             for (int i = 0; i < dataFiles.length - 1; i++) {
@@ -67,14 +75,14 @@ public class Sorter {
                     high = highHalfSize.length > 1 ? mergeOrderedArrays(mediumHalfSizeElements[1], highHalfSize[1]) : mediumHalfSizeElements[1];
 
                     //reassign temporary blocks to the general data Matrix
-                    dataFiles[i] = FileManager.arrayToFile(low,dataFiles[i].getAbsolutePath());
-                    dataFiles[i + 1] = FileManager.arrayToFile(high,dataFiles[i + 1].getAbsolutePath());
+                    dataFiles[i] = FileManager.arrayToFile(low,dataFiles[i]);
+                    dataFiles[i + 1] = FileManager.arrayToFile(high,dataFiles[i + 1]);
                 }
             }
             //printMatrix(dataMatrix);
         }
-
-        return  FileManager.fileJoiner(sourceFile.getAbsolutePath(),PATH_BULK);
+        File outPutFile = new File(Const.OUTPUT_FILE_PATH);
+        return  FileManager.fileJoiner(outPutFile,Const.CHUNK_FILE_PATH);
     }
 
     /**

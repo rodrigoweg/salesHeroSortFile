@@ -1,41 +1,43 @@
 package com.salehero.sorter.service;
 
+import com.salehero.sorter.utils.Const;
 import com.salehero.sorter.utils.Utils;
 import org.codehaus.plexus.util.FileUtils;
 
 import java.io.*;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FileManager {
 
 
-    public static File[] fileSpliter(File sourceFile,int chunkSize) {
+    public static File[] fileSpliter(File sourceFile, String PATH_CHUNKS, int chunkSize) {
 
         List<File> result = new ArrayList<>();
-        String PATH_CHUNKS = sourceFile.getParent()+Utils.CHUNK_FOLDER_NAME;
-        String line = "";
+        FileOutputStream fos = null;
+        BufferedWriter bw = null;
         try {
             if(!new File(PATH_CHUNKS).exists()){
                 new File(PATH_CHUNKS).mkdirs();
             }
             FileUtils.cleanDirectory(PATH_CHUNKS);
-            FileInputStream fs = new FileInputStream(sourceFile);
+            FileInputStream fs = new FileInputStream(URLDecoder.decode(sourceFile.getPath(), "UTF-8"));
             BufferedReader br = new BufferedReader(new InputStreamReader(fs));
 
             int count = 0;
             int lineNumber = 0;
-            FileOutputStream fos = new FileOutputStream(PATH_CHUNKS + Utils.TMP_CHUNK_FILE_NAME + count + ".txt");
-            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
-            result.add(new File(PATH_CHUNKS + Utils.TMP_CHUNK_FILE_NAME + count + ".txt"));
+            fos = new FileOutputStream(Const.CHUNK_FILE_PATH + count + ".txt");
+            bw = new BufferedWriter(new OutputStreamWriter(fos));
+            result.add(new File(Const.CHUNK_FILE_PATH + count + ".txt"));
+            String line = "";
             while ((line = br.readLine()) != null) {
-                System.out.println(line);
                 if (lineNumber!= 0 && lineNumber % chunkSize == 0) {
                     fos.close();
                     count++;
-                    fos = new FileOutputStream(PATH_CHUNKS + Utils.TMP_CHUNK_FILE_NAME + count + ".txt");
+                    fos = new FileOutputStream(Const.CHUNK_FILE_PATH + count + ".txt");
                     bw = new BufferedWriter(new OutputStreamWriter(fos));
-                    result.add(new File(PATH_CHUNKS + Utils.TMP_CHUNK_FILE_NAME + count + ".txt"));
+                    result.add(new File(Const.CHUNK_FILE_PATH + count + ".txt"));
 
                     bw.write(line);
                     bw.newLine();
@@ -55,35 +57,47 @@ public class FileManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        finally {
+            close(fos);
+            close(bw);
+        }
         return result.toArray(new File[result.size()]);
     }
 
-    public static File fileJoiner(String PATH_JOIN, String PATH_CHUNKS) {
+    public static File fileJoiner(File fileOutput, String PATH_CHUNKS) {
 
-        File fileOutput = null;
+        FileOutputStream fos = null;
+        BufferedWriter bufferWriter = null;
+        FileInputStream fis = null;
+        BufferedReader bufferReader = null;
         try {
             int count = 0;
 
-            fileOutput = new File(PATH_JOIN);
             if (fileOutput.exists()) {
-                fileOutput.delete();
+                PrintWriter writer = new PrintWriter(fileOutput);
+                writer.print("");
+                writer.close();
+            }else{
+                fileOutput.createNewFile();
             }
-            FileOutputStream fos = new FileOutputStream(PATH_JOIN);
-            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
 
-            File fileInput = new File(PATH_CHUNKS + Utils.TMP_CHUNK_FILE_NAME + count + ".txt");
+            fos = new FileOutputStream(Utils.getDecodedPath(fileOutput));
+            bufferWriter = new BufferedWriter(new OutputStreamWriter(fos));
+
+            File fileInput = new File(Const.CHUNK_FILE_PATH + count + ".txt");
             while (fileInput.exists()) {
-                FileInputStream fs = new FileInputStream(PATH_CHUNKS + Utils.TMP_CHUNK_FILE_NAME + count + ".txt");
-                BufferedReader br = new BufferedReader(new InputStreamReader(fs));
+                fis = new FileInputStream(Const.CHUNK_FILE_PATH + count + ".txt");
+                bufferReader = new BufferedReader(new InputStreamReader(fis));
                 String line = "";
-                while ((line = br.readLine()) != null) {
-                    bw.write(line);
-                    bw.newLine();
-                    bw.flush();
+                while ((line = bufferReader.readLine()) != null) {
+                    bufferWriter.write(line);
+                    bufferWriter.newLine();
+                    bufferWriter.flush();
                 }
 
                 count++;
-                fileInput = new File(PATH_CHUNKS + Utils.TMP_CHUNK_FILE_NAME + count + ".txt");
+                fileInput = new File(Const.CHUNK_FILE_PATH + count + ".txt");
             }
 
 
@@ -92,42 +106,60 @@ public class FileManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        finally {
+            close(fos);
+            close(bufferWriter);
+            close(fis);
+            close(bufferReader);
+        }
+
         return fileOutput;
     }
 
     static public int[] fileToArray(File file){
         List<Integer> data = new ArrayList<>();
-
+        FileInputStream fis = null;
+        BufferedReader bufferReader = null;
         try {
-            FileInputStream fs = new FileInputStream(file);
-            BufferedReader br = new BufferedReader(new InputStreamReader(fs));
+            fis = new FileInputStream(Utils.getDecodedPath(file));
+            bufferReader = new BufferedReader(new InputStreamReader(fis));
             String line;
-            while ((line = br.readLine()) != null) {
-                data.add(Integer.parseInt(line));
+            while ((line = bufferReader.readLine()) != null) {
+                if(line!= null && line.length() > 0){
+                    data.add(Integer.parseInt(line));
+                }
+
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        finally {
+            close(fis);
+            close(bufferReader);
+        }
 
         return data.stream().mapToInt(i -> i).toArray();
     }
 
 
-    static public File arrayToFile(int[] data, String PATH){
-        File file = new File(PATH);
-        if (file.exists()) {
-            file.delete();
+    static public File arrayToFile(int[] data, File outputFile){
+
+        FileOutputStream fos = null;
+        BufferedWriter bufferedWriter = null;
+
+        if (outputFile.exists()) {
+            outputFile.delete();
         }
         try {
-            FileOutputStream fos = new FileOutputStream(PATH);
-            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
+            fos = new FileOutputStream(outputFile);
+            bufferedWriter = new BufferedWriter(new OutputStreamWriter(fos));
             for(int i = 0; i < data.length;i++) {
-                bw.write(""+data[i]);
-                bw.newLine();
-                bw.flush();
+                bufferedWriter.write(""+data[i]);
+                bufferedWriter.newLine();
+                bufferedWriter.flush();
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -135,7 +167,19 @@ public class FileManager {
             e.printStackTrace();
         }
 
-        return file;
+        finally {
+            close(fos);
+            close(bufferedWriter);
+        }
+        return outputFile;
     }
 
+    public static void close(Closeable c) {
+        if (c == null) return;
+        try {
+            c.close();
+        } catch (IOException e) {
+            //log the exception
+        }
+    }
 }
