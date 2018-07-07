@@ -1,16 +1,16 @@
-package com.salehero.sorter.service;
+package com.saleshero.sorter.service;
 
-import com.salehero.sorter.utils.Const;
-import com.salehero.sorter.utils.FileGenerator;
-import com.salehero.sorter.utils.Utils;
+import com.saleshero.sorter.exception.FileManagementException;
+import com.saleshero.sorter.service.Utils.ConstTest;
+import com.saleshero.sorter.utils.FileGenerator;
+import com.saleshero.sorter.utils.Utils;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.SortedSet;
@@ -19,13 +19,16 @@ import java.util.TreeSet;
 @RunWith(SpringRunner.class)
 public class SortTest {
 
-    File sourceFileTmp = Utils.getFileClassPath(Const.NUMBERS_TMP_FILE_PATH);
+    File sourceFileTmp = null;
 
-    public SortTest() throws IOException {
+    @Before
+    public void setup() throws FileManagementException {
+        sourceFileTmp = Utils.getFileFromClassPath(ConstTest.TEST_NUMBERS_TMP_FILE_PATH);
     }
 
+
     @Test
-    public void basic() throws UnsupportedEncodingException {
+    public void basic() throws FileManagementException {
         int[] elements = {0,1,3,2,5,1,2,2};
         int BULKSIZE = 4;
         File sourceFile = FileManager.arrayToFile(elements, sourceFileTmp);
@@ -34,7 +37,7 @@ public class SortTest {
     }
 
     @Test
-    public void basic2() throws UnsupportedEncodingException {
+    public void basic2() throws FileManagementException {
         int[] elements = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 2, 4, 2, 3, 5, 21, 4, 5, 23, 23, 5, 23, 5,2,0,999999};
         int BULKSIZE = 3;
         File result = Sorter.sortFile(FileManager.arrayToFile(elements, sourceFileTmp), BULKSIZE);
@@ -42,7 +45,7 @@ public class SortTest {
     }
 
     @Test
-    public void basic3() throws UnsupportedEncodingException {
+    public void basic3() throws FileManagementException {
         int[] elements = {952596251, 684964922, 83205282, 879659927, 548469615, 56156459, 113425171, 595470910, 534426352, 864431367};
         int BULKSIZE = 3;
         File result = Sorter.sortFile(FileManager.arrayToFile(elements, sourceFileTmp), BULKSIZE);
@@ -52,7 +55,7 @@ public class SortTest {
 
 
     @Test
-    public void dynamic() throws IOException {
+    public void dynamic() throws FileManagementException {
         TestCoupleValue values = SortTest.TestCoupleValue.getRandomArray(10);
         File elements = values.randomFile;
         int BULKSIZE = 3;
@@ -61,7 +64,7 @@ public class SortTest {
     }
 
     @Test
-    public void dynamicRandom() throws IOException {
+    public void dynamicRandom() throws FileManagementException {
         Random rand = new Random();
         int randomNumberElements = rand.nextInt(10000);
         TestCoupleValue values = SortTest.TestCoupleValue.getRandomArray(randomNumberElements);
@@ -71,10 +74,10 @@ public class SortTest {
         Assert.assertEquals(values.orderedAsString,Arrays.toString(FileManager.fileToArray(result)));
     }
 
-    @Test
-    public void dynamicBigFile() throws IOException {
+    //@Test
+    public void dynamicBigFile() throws FileManagementException {
         int BULKSIZE = 999999;
-        File elements = FileGenerator.getFile(0.1);
+        File elements = FileGenerator.getFile(ConstTest.TEST_FILES,0.01);
         File result = Sorter.sortFile(elements, BULKSIZE);
     }
 
@@ -87,7 +90,7 @@ public class SortTest {
             this.randomFile = randomFile;
         }
 
-        static TestCoupleValue getRandomArray(int size) throws IOException {
+        static TestCoupleValue getRandomArray(int size) throws FileManagementException {
 
             SortedSet set = new TreeSet();
             int[] randomArray = new int[size];
@@ -99,7 +102,7 @@ public class SortTest {
             }
             int[] orderedArray = Arrays.stream(set.toArray()).mapToInt(o -> (int)o).toArray();
             String orderedAsString = Arrays.toString(orderedArray);
-            File randomFile = FileManager.arrayToFile(randomArray,Utils.getFileClassPath(Const.NUMBERS_TMP_FILE_PATH));
+            File randomFile = FileManager.arrayToFile(randomArray,Utils.getFileFromClassPath(ConstTest.TEST_NUMBERS_TMP_FILE_PATH));
             return new TestCoupleValue(orderedAsString, FileManager.arrayToFile(randomArray,randomFile));
         }
     }
