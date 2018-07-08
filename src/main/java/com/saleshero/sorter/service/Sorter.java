@@ -18,14 +18,14 @@ public class Sorter {
 
     /**
      * @param sourceFile Data to be ordered
-     * @param chunkSize  Size able to manipulate due memory limitation
+     * @param chunkSizeLines  Number of lines able to manipulate due memory limitation
      * @return file with the sorted data
      */
-    public static File sortFile(File sourceFile, int chunkSize) throws FileManagementException {
+    public static File sortFile(File sourceFile, int chunkSizeLines) throws FileManagementException {
         //Divide data in the size that could be processed (bulk size)
         long start = System.currentTimeMillis();
-        String PATH_CHUNKS_FOLDER = Utils.decodeUTF8(sourceFile.getParent() + Const.CHUNK_FOLDER_PATH);
-        File[] chunkFiles = FileManager.fileSpliter(sourceFile, chunkSize);
+        log.debug("Chunk folder will be created in: "+Utils.getParentFolder(sourceFile));
+        File[] chunkFiles = FileManager.fileSpliter(sourceFile, chunkSizeLines);
 
         //first order chunkFiles
         for (File chunkFile : chunkFiles) {
@@ -57,7 +57,7 @@ public class Sorter {
                     fullSortedFiles = false;
 
                     //Blocks are divided in subbloks of half size
-                    int halfSize = (int) Math.ceil((double) chunkSize / 2);
+                    int halfSize = (int) Math.ceil((double) chunkSizeLines / 2);
                     int[][] lowHalfSize = splitSubArray(lowBlock, halfSize);
                     int[][] highHalfSize = splitSubArray(highBlock, halfSize);
 
@@ -68,7 +68,6 @@ public class Sorter {
 
                     //temporaryMergedBlock is divided 2
                     int mediumHalfSizes = (int) Math.ceil((double) temporaryMergedBlock.length / 2);
-                    ;
                     int[][] mediumHalfSizeElements = splitSubArray(temporaryMergedBlock, Math.min(halfSize, mediumHalfSizes));
 
                     //low block remains with the initial low part and the low part of the temporaryMergedBlock
@@ -91,7 +90,7 @@ public class Sorter {
             log.debug("ITERATION NUMBER: " + (iteration++) + ". Time used: " + time / 1e3 + " seconds.");
             //printMatrix(dataMatrix);
         }
-        return FileManager.fileJoiner(Utils.decodeUTF8(sourceFile.getParent() + File.separator + Const.CHUNK_FOLDER_PATH));
+        return FileManager.fileJoiner(Utils.decodeUTF8(Utils.getParentFolder(sourceFile) + File.separator + Const.CHUNK_FOLDER_PATH));
     }
 
     /**

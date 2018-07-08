@@ -7,39 +7,9 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.file.FileAlreadyExistsException;
 
 public class Utils {
-
-    /**
-     * @param path Path to the file
-     * @return File in the class path
-     * @throws FileManagementException Exception with info about the erros
-     */
-    static public File getFileFromClassPath(String path) throws FileManagementException {
-        ClassLoader classLoader = Utils.class.getClassLoader();
-        URL resource = classLoader.getResource(path);
-        File file = null;
-
-        if (path == null) {
-            throw new FileManagementException("Path is null. Not possible to get file.");
-        }
-
-        try {
-            if (resource == null) {
-                file = new File(path);
-                file.createNewFile();
-            } else {
-                file = new File(decodeUTF8(resource.getFile()));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new FileManagementException("Error creating file.");
-        }
-
-
-        return file;
-    }
-
     /**
      * @param file File in the classpath
      * @return String with path to the file
@@ -64,5 +34,25 @@ public class Utils {
             e.printStackTrace();
             throw new FileManagementException("Error decoding path in UTF-8: " + path, e);
         }
+    }
+
+    static public String getParentFolder(File file) throws FileManagementException {
+        if(file == null){
+            throw new FileManagementException("File is null. Not possible to get parent folder");
+        }
+
+        if(file.getParent()!=null){
+            return Utils.decodeUTF8(file.getParent());
+        }
+
+        String absolutePath = file.getAbsolutePath();
+        String parentPath = absolutePath.substring(0,absolutePath.lastIndexOf(File.separatorChar));
+
+        if(!new File(parentPath).exists()){
+            throw new FileManagementException("Unknown error getting parent folder: "+absolutePath
+                    +". Path obtained: "+parentPath);
+        }
+
+        return parentPath;
     }
 }

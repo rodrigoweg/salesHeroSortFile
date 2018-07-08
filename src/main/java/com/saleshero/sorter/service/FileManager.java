@@ -30,18 +30,18 @@ public class FileManager {
             throw new FileManagementException("File is null. Not possible to split.");
         }
 
-        String outputPath = Utils.decodeUTF8(sourceFile.getParent()+Const.CHUNK_FOLDER_PATH);
+        String outputPath = Utils.decodeUTF8(Utils.getParentFolder(sourceFile)+Const.CHUNK_FOLDER_PATH);
         List<File> result = new ArrayList<>();
         BufferedWriter chunkWriter = null;
         BufferedReader sourceFileReader = null;
         FileInputStream sourceFileInputStream = null;
         try {
             prepareDestinationFolder(outputPath);
-            sourceFileInputStream = new FileInputStream(Utils.getFileFromClassPath(sourceFile.getPath()));
+            sourceFileInputStream = new FileInputStream(new File(sourceFile.getPath()));
             sourceFileReader = new BufferedReader(new InputStreamReader(sourceFileInputStream));
 
             int fileNumber = 0;
-            File chunkFile = Utils.getFileFromClassPath(getFileName(outputPath,fileNumber));
+            File chunkFile = new File(getFileName(outputPath,fileNumber));
             chunkWriter = getBufferWriterResetFile(chunkFile);
             result.add(chunkFile);
 
@@ -53,7 +53,7 @@ public class FileManager {
                 if (lineNumber != 0 && lineNumber % chunkSize == 0) {
                     close(chunkWriter);
                     fileNumber++;
-                    chunkFile = Utils.getFileFromClassPath(getFileName(outputPath,fileNumber));
+                    chunkFile = new File(getFileName(outputPath,fileNumber));
                     chunkWriter = getBufferWriterResetFile(chunkFile);
                     result.add(chunkFile);
 
@@ -102,7 +102,7 @@ public class FileManager {
 
         try {
             //get bufferWriter from fileOutput. Clean content if file exist or create new one
-            fileOutput = Utils.getFileFromClassPath((PATH_CHUNKFILES_FILE+Const.CHUNK_OUTPUT_FILE_NAME));
+            fileOutput = new File((PATH_CHUNKFILES_FILE+Const.CHUNK_OUTPUT_FILE_NAME));
             outputBufferWriter = getBufferWriterResetFile(fileOutput);
 
             int fileNumber = 0;
@@ -205,8 +205,8 @@ public class FileManager {
      * @throws FileManagementException
      */
     private static void prepareDestinationFolder(String PATH_CHUNKS) throws FileManagementException {
-        if (!Utils.getFileFromClassPath(PATH_CHUNKS).exists()) {
-            Utils.getFileFromClassPath(PATH_CHUNKS).mkdirs();
+        if (!new File(PATH_CHUNKS).exists()) {
+            new File(PATH_CHUNKS).mkdirs();
         }
         //Directory is cleaned before split the file
         try {
