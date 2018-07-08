@@ -11,13 +11,14 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class helps to manage the files operations involved in the process of sort a big file
+ */
 public class FileManager {
-
 
     static Logger log = LoggerFactory.getLogger(FileManager.class);
 
     /**
-     *
      * @param sourceFile Source file to be split
      * @param chunkSize Size of chunds
      * @return List of files with content of the source file
@@ -30,15 +31,11 @@ public class FileManager {
         }
 
         String outputPath = Utils.decodeUTF8(sourceFile.getParent()+Const.CHUNK_FOLDER_PATH);
-
         List<File> result = new ArrayList<>();
         BufferedWriter chunkWriter = null;
         BufferedReader sourceFileReader = null;
         FileInputStream sourceFileInputStream = null;
         try {
-
-
-
             prepareDestinationFolder(outputPath);
             sourceFileInputStream = new FileInputStream(Utils.getFileFromClassPath(sourceFile.getPath()));
             sourceFileReader = new BufferedReader(new InputStreamReader(sourceFileInputStream));
@@ -104,7 +101,6 @@ public class FileManager {
         File fileOutput = null;
 
         try {
-
             //get bufferWriter from fileOutput. Clean content if file exist or create new one
             fileOutput = Utils.getFileFromClassPath((PATH_CHUNKFILES_FILE+Const.CHUNK_OUTPUT_FILE_NAME));
             outputBufferWriter = getBufferWriterResetFile(fileOutput);
@@ -135,12 +131,10 @@ public class FileManager {
             close(chunkFileInputStream);
             close(chunkFilebufferReader);
         }
-
         return fileOutput;
     }
 
     /**
-     *
      * @param file File to be converted in array
      * @return Array with content of file
      * @throws FileManagementException
@@ -168,12 +162,10 @@ public class FileManager {
             close(fis);
             close(bufferReader);
         }
-
         return data.stream().mapToInt(i -> i).toArray();
     }
 
     /**
-     *
      * @param data Array with data
      * @param outputFile File where data should be placed
      * @return File with data
@@ -209,7 +201,6 @@ public class FileManager {
     }
 
     /**
-     *
      * @param PATH_CHUNKS Path to chunk folder
      * @throws FileManagementException
      */
@@ -245,7 +236,6 @@ public class FileManager {
     }
 
     /**
-     *
      * @param fileNumber Number of chunk
      * @return File with number of the chunk
      */
@@ -254,7 +244,6 @@ public class FileManager {
     }
 
     /**
-     *
      * @param fileOutput File to be clean
      * @return Writer of new / empty file
      * @throws FileManagementException Exception with info about errors getting the Writer
@@ -264,12 +253,12 @@ public class FileManager {
             if(fileOutput == null){
                 throw new FileManagementException("File is null");
             }
-
             if(fileOutput.isDirectory()){
+                //This method is meant for files only
                 throw new FileManagementException("Error: File is directory.");
             }
-
             if (fileOutput.exists()) {
+                // Empty the file if exist
                 PrintWriter writer = new PrintWriter(fileOutput);
                 writer.print("");
                 writer.close();

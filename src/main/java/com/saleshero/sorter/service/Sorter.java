@@ -6,10 +6,12 @@ import com.saleshero.sorter.utils.Utils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.util.Arrays;
 
+/**
+ * This class provide the methods to order a file regardless its size.
+ */
 public class Sorter {
 
     static Logger log = LoggerFactory.getLogger(Sorter.class);
@@ -32,7 +34,6 @@ public class Sorter {
             Arrays.sort(bulkArray);
             FileManager.arrayToFile(bulkArray, chunkFile);
         }
-
         long time = System.currentTimeMillis() - start;
         log.info("END SORTING CHUNKS. Time used: " + time / 1e3 + " seconds.");
         start = System.currentTimeMillis();
@@ -59,7 +60,6 @@ public class Sorter {
                     int halfSize = (int) Math.ceil((double) chunkSize / 2);
                     int[][] lowHalfSize = splitSubArray(lowBlock, halfSize);
                     int[][] highHalfSize = splitSubArray(highBlock, halfSize);
-
 
                     // merge and sort the high part of low block and low part of high block
                     // check if the last block only has one subblock
@@ -105,7 +105,6 @@ public class Sorter {
         }
     }
 
-
     /**
      * This method merges two ordered arrays
      *
@@ -123,7 +122,6 @@ public class Sorter {
             result[--k] =
                     (j < 0 || (i >= 0 && low[i] >= high[j])) ? low[i--] : high[j--];
         }
-
         return result;
     }
 
@@ -156,13 +154,9 @@ public class Sorter {
             stopIndex += chunkSize;
             dest[destIndex++] = Arrays.copyOfRange(data, startIndex, stopIndex);
         }
-
         if (stopIndex < length)
             dest[destIndex] = Arrays.copyOfRange(data, stopIndex, length);
 
         return dest;
     }
-
 }
-
-
